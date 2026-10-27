@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTournament } from '../context/TournamentContext';
-import { ShieldCheck, Mail, KeyRound, LogIn, CheckCircle2, AlertCircle, X, User, Crown, Users } from 'lucide-react';
+import { KeyRound, LogIn, AlertCircle, X, User, Eye, EyeOff } from 'lucide-react';
 import { CyborgLogo } from './CyborgLogo';
 
 interface AuthModalProps {
@@ -9,207 +10,178 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { loginWithCredentials, loginWithGoogle, loginAs } = useTournament();
+  const { loginWithCredentials } = useTournament();
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
+  // Trava a rolagem do corpo da página quando o modal de login está aberto
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!usernameOrEmail) {
-      setError('Por favor, informe seu usuário ou e-mail institucional.');
+    if (!usernameOrEmail.trim()) {
+      setError('Por favor, informe seu usuário ou e-mail.');
+      return;
+    }
+    if (!password) {
+      setError('Por favor, informe sua senha.');
       return;
     }
     setLoading(true);
     try {
-      const res = await loginWithCredentials(usernameOrEmail, password);
+      const res = await loginWithCredentials(usernameOrEmail.trim(), password);
       if (res.success) {
+        setUsernameOrEmail('');
+        setPassword('');
+        setError(null);
         onClose();
       } else {
-        setError(res.error || 'Falha ao autenticar.');
+        setError(res.error || 'Usuário ou senha incorretos.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuickCredential = async (user: string, pass: string) => {
-    setUsernameOrEmail(user);
-    setPassword(pass);
+  const handleClose = () => {
     setError(null);
-    setLoading(true);
-    try {
-      const res = await loginWithCredentials(user, pass);
-      if (res.success) {
-        onClose();
-      } else {
-        setError(res.error || 'Falha ao autenticar.');
-      }
-    } finally {
-      setLoading(false);
-    }
+    setUsernameOrEmail('');
+    setPassword('');
+    onClose();
   };
 
-  const handleGoogle = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await loginWithGoogle();
-      onClose();
-    } catch (err: any) {
-      setError('Erro ao autenticar com Google: ' + (err?.message || err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-lg rounded-3xl bg-neutral-900 border border-amber-500/40 p-6 sm:p-7 shadow-2xl glow-gold text-neutral-100 max-h-[95vh] overflow-y-auto">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fadeIn overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      aria-modal="true"
+      role="dialog"
+    >
+      {/* Card de Login Centralizado com Efeito Dourado */}
+      <div
+        className="relative w-full max-w-md my-auto rounded-3xl bg-neutral-900 border-2 border-amber-500/50 p-6 sm:p-8 shadow-[0_0_50px_rgba(245,158,11,0.3)] text-neutral-100 max-h-[calc(100vh-2rem)] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Botão Fechar */}
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800 transition"
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-neutral-400 hover:text-white p-2 rounded-xl hover:bg-neutral-800 transition cursor-pointer"
           aria-label="Fechar"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center mb-5">
-          <div className="flex justify-center mb-2">
+        {/* Cabeçalho */}
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
             <CyborgLogo size="md" />
           </div>
-          <h2 className="text-xl font-bold font-heading text-amber-400 tracking-wider">
-            PORTAL DE ACESSO CYBORGUES
+          <h2 className="text-xl sm:text-2xl font-bold font-heading text-amber-400 tracking-wider">
+            PORTAL DE ACESSO
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
-            Autenticação Oficial • V INTERNERD 2026 (UEMA)
+            V INTERNERD 2026 • Cyborgues UEMA
           </p>
         </div>
 
+        {/* Mensagem de Erro */}
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-red-950/70 border border-red-500/50 text-red-200 text-xs flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-xl bg-red-950/80 border border-red-500/50 text-red-200 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* Formulário Padrão de Login */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-neutral-300 mb-1">
-              Usuário ou E-mail Institucional *
+            <label className="block text-xs font-semibold text-neutral-300 mb-1.5 font-cyber uppercase tracking-wider">
+              Usuário ou E-mail
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
+              <User className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3.5" />
               <input
                 type="text"
                 required
+                autoFocus
+                autoComplete="username"
                 value={usernameOrEmail}
                 onChange={(e) => setUsernameOrEmail(e.target.value)}
-                placeholder="Ex: Caiocruz, Luisarthur, lucassilva..."
-                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition font-mono"
+                placeholder="Digite seu usuário ou e-mail"
+                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-3 pl-10 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition focus:ring-1 focus:ring-amber-400"
               />
             </div>
-            <span className="text-[10px] text-neutral-500 font-cyber">
-              Capitães e Diretores recebem seus logins da Diretoria Geral.
-            </span>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-neutral-300">Senha de Acesso *</label>
-              <span className="text-[10px] text-amber-400/80 font-mono">Padrão: @Cyborgues2026</span>
-            </div>
+            <label className="block text-xs font-semibold text-neutral-300 mb-1.5 font-cyber uppercase tracking-wider">
+              Senha
+            </label>
             <div className="relative">
-              <KeyRound className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
+              <KeyRound className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3.5" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition font-mono"
+                placeholder="Digite sua senha"
+                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-3 pl-10 pr-11 text-sm text-white placeholder-neutral-500 focus:outline-none transition focus:ring-1 focus:ring-amber-400"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-3 text-neutral-400 hover:text-amber-400 transition cursor-pointer p-0.5"
+                aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer text-sm shadow-md mt-2 font-cyber uppercase tracking-wider"
+            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-60 text-black font-extrabold py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer text-sm shadow-lg mt-3 font-cyber uppercase tracking-wider glow-gold-sm"
           >
             <LogIn className="w-4 h-4" />
-            <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
+            <span>{loading ? 'Entrando...' : 'Entrar no Sistema'}</span>
           </button>
         </form>
 
-        {/* Quick Credential Buttons Requested by User */}
-        <div className="mt-5 pt-4 border-t border-neutral-800 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 font-cyber">
-              🔑 Entrar com Credenciais Oficiais:
-            </span>
-            <span className="text-[10px] text-neutral-400 font-mono">Senha: @Cyborgues2026</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            {/* Caio Cruz */}
-            <button
-              onClick={() => handleQuickCredential('Caiocruz', '@Cyborgues2026')}
-              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-amber-500/15 border border-amber-500/30 hover:border-amber-400 text-left transition flex items-center gap-2 cursor-pointer group"
-            >
-              <Crown className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <div className="truncate">
-                <span className="font-bold text-amber-300 block">Caio Cruz</span>
-                <span className="text-[10px] text-neutral-400 font-mono">Usuário: Caiocruz</span>
-              </div>
-            </button>
-
-            {/* Luis Arthur */}
-            <button
-              onClick={() => handleQuickCredential('Luisarthur', '@Cyborgues2026')}
-              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-amber-500/15 border border-amber-500/30 hover:border-amber-400 text-left transition flex items-center gap-2 cursor-pointer group"
-            >
-              <Crown className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <div className="truncate">
-                <span className="font-bold text-amber-300 block">Luys Arthur</span>
-                <span className="text-[10px] text-neutral-400 font-mono">Usuário: Luisarthur</span>
-              </div>
-            </button>
-
-            {/* Capitão Lucas Silva */}
-            <button
-              onClick={() => handleQuickCredential('lucassilva', '@Cyborgues2026')}
-              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-blue-500/15 border border-blue-500/30 hover:border-blue-400 text-left transition flex items-center gap-2 cursor-pointer group"
-            >
-              <Users className="w-4 h-4 text-blue-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <div className="truncate">
-                <span className="font-bold text-blue-300 block">Lucas Silva</span>
-                <span className="text-[10px] text-neutral-400 font-mono">Capitão ByteForce</span>
-              </div>
-            </button>
-
-            {/* Diretor Lucas Vinicius */}
-            <button
-              onClick={() => handleQuickCredential('lucasvinicius', '@Cyborgues2026')}
-              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-emerald-500/15 border border-emerald-500/30 hover:border-emerald-400 text-left transition flex items-center gap-2 cursor-pointer group"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <div className="truncate">
-                <span className="font-bold text-emerald-300 block">Lucas Vinícius</span>
-                <span className="text-[10px] text-neutral-400 font-mono">Dir. Futsal & Vôlei</span>
-              </div>
-            </button>
-          </div>
-
-          <div className="p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800 text-[11px] text-neutral-400 leading-relaxed font-cyber">
-            ℹ️ <strong className="text-amber-300">Regra de Segurança:</strong> Diretores e Capitães podem alterar suas senhas a qualquer momento no menu "Minha Conta", mas o nome de usuário (login) é estritamente imutável.
-          </div>
+        {/* Rodapé Informativo */}
+        <div className="mt-6 pt-4 border-t border-neutral-800 text-center">
+          <p className="text-[11px] text-neutral-400 leading-relaxed">
+            Acesso exclusivo para Capitães, Diretores e Organização do torneio. Em caso de dúvidas sobre seu acesso, consulte a Diretoria Geral.
+          </p>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

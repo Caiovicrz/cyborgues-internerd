@@ -105,13 +105,13 @@ interface TournamentContextType {
 
 const TournamentContext = createContext<TournamentContextType | null>(null);
 
-const STORAGE_KEY_PREFIX = 'vinternerd_data_v1_';
+const STORAGE_KEY_PREFIX = 'vinternerd_prod_2026_';
 
 export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Inicialização com LocalStorage ou Fallback
+  // Inicialização com LocalStorage ou Fallback (Inicia deslogado/modo público por padrão)
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PREFIX + 'currentUser');
-    return saved ? JSON.parse(saved) : PRESET_USERS[0]; // Inicia como Diretoria Geral para fácil visualização
+    return saved ? JSON.parse(saved) : null;
   });
 
   const [users, setUsers] = useState<UserProfile[]>(() => {

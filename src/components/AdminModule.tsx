@@ -971,7 +971,7 @@ export const AdminModule: React.FC = () => {
                 </div>
                 <div className="text-xs text-neutral-300 font-mono space-y-0.5">
                   <div>Usuário: <strong className="text-amber-400">Caiocruz</strong> (Imutável)</div>
-                  <div>Senha Padrão: <span className="text-neutral-400">@Cyborgues2026</span></div>
+                  <div className="text-[11px] text-emerald-400 font-cyber">● Acesso de Administrador Ativo</div>
                   <div className="text-[11px] text-neutral-500">caiocruz@cyborgues.uema.br</div>
                 </div>
               </div>
@@ -985,7 +985,7 @@ export const AdminModule: React.FC = () => {
                 </div>
                 <div className="text-xs text-neutral-300 font-mono space-y-0.5">
                   <div>Usuário: <strong className="text-amber-400">Luisarthur</strong> (Imutável)</div>
-                  <div>Senha Padrão: <span className="text-neutral-400">@Cyborgues2026</span></div>
+                  <div className="text-[11px] text-emerald-400 font-cyber">● Acesso de Administrador Ativo</div>
                   <div className="text-[11px] text-neutral-500">aaa.cyborgues@gmail.com</div>
                 </div>
               </div>
@@ -1270,8 +1270,8 @@ export const AdminModule: React.FC = () => {
                           ? `Modalidades: ${u.assignedModalities.join(', ')}`
                           : '-'}
                       </td>
-                      <td className="p-3 font-mono text-neutral-400">
-                        {u.password || '@Cyborgues2026'}
+                      <td className="p-3 font-mono text-neutral-500 tracking-widest text-xs">
+                        ••••••••
                       </td>
                       <td className="p-3 text-right">
                         <button
