@@ -1,0 +1,139 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public user profile and permissions",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["atleta", "capitao", "diretor", "admin"] },
+        "teamId": { "type": "string" },
+        "teamName": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "assignedModalities": { "type": "array" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "AthletePrivateInfo": {
+      "title": "AthletePrivateInfo",
+      "description": "Protected student PII, enrollment document and contact info",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "matricula": { "type": "string" },
+        "phone": { "type": "string" },
+        "turma": { "type": "string" },
+        "proofDocumentUrl": { "type": "string" },
+        "teamId": { "type": "string" },
+        "modalities": { "type": "array" },
+        "feeTotal": { "type": "number" },
+        "paymentStatus": { "type": "string", "enum": ["pendente", "pago"] },
+        "registrationStatus": { "type": "string", "enum": ["pendente", "aprovada", "recusada"] },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "matricula", "phone"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "Participating academic team in V INTERNERD",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "captainId": { "type": "string" },
+        "captainName": { "type": "string" },
+        "captainContact": { "type": "string" },
+        "modalities": { "type": "array" },
+        "memberIds": { "type": "array" },
+        "status": { "type": "string", "enum": ["pendente", "aprovada", "recusada"] },
+        "totalFee": { "type": "number" },
+        "totalPaid": { "type": "number" },
+        "paymentStatus": { "type": "string", "enum": ["pendente", "parcial", "pago"] }
+      },
+      "required": ["id", "name", "captainId"]
+    },
+    "Modality": {
+      "title": "Modality",
+      "description": "Sports or esports modality information and responsible director",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["coletiva", "individual"] },
+        "responsibleDirectorId": { "type": "string" },
+        "responsibleDirectorName": { "type": "string" },
+        "directorContact": { "type": "string" },
+        "venue": { "type": "string" },
+        "dates": { "type": "string" }
+      },
+      "required": ["id", "name", "category"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Tournament game match or round",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "modalityId": { "type": "string" },
+        "phase": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "venue": { "type": "string" },
+        "teamAId": { "type": "string" },
+        "teamAName": { "type": "string" },
+        "teamBId": { "type": "string" },
+        "teamBName": { "type": "string" },
+        "scoreA": { "type": "number" },
+        "scoreB": { "type": "number" },
+        "isWO": { "type": "boolean" },
+        "woWinner": { "type": "string" },
+        "status": { "type": "string", "enum": ["agendado", "em_andamento", "finalizado", "cancelado"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "modalityId", "phase", "status"]
+    },
+    "Notice": {
+      "title": "Notice",
+      "description": "Official communication notice from Diretoria Geral",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "priority": { "type": "string", "enum": ["normal", "alta", "urgente"] },
+        "author": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["id", "title", "content"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public profiles of athletes, captains, directors and general board"
+    },
+    "/athletes_private/{athleteId}": {
+      "schema": { "$ref": "#/entities/AthletePrivateInfo" },
+      "description": "Sensitive student data (matricula, phone, enrollment document) with strict access control"
+    },
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/Team" },
+      "description": "Registered teams and rosters"
+    },
+    "/modalities/{modalityId}": {
+      "schema": { "$ref": "#/entities/Modality" },
+      "description": "Tournament sports/esports and assigned coordinators"
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/Match" },
+      "description": "Schedule, live scores and match results"
+    },
+    "/notices/{noticeId}": {
+      "schema": { "$ref": "#/entities/Notice" },
+      "description": "Official publications and announcements"
+    }
+  }
+}

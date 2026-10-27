@@ -1,0 +1,6 @@
+{
+  "name": "V INTERNERD – Cyborgues",
+  "description": "Plataforma oficial do V INTERNERD – Campeonato interno da Atlética Cyborgues (Engenharia de Computação - UEMA São Luís). Inscrições, tabelas de jogos, resultados e classificação geral.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

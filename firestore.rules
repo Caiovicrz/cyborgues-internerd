@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "ka.iovictor337@gmail.com" ||
+        getUserData().role == "admin"
+      );
+    }
+
+    function isModalityDirector(modalityId) {
+      return isSignedIn() && (
+        isAdmin() ||
+        (getUserData().role == "diretor" && modalityId in getUserData().assignedModalities)
+      );
+    }
+
+    function isTeamCaptain(teamId) {
+      return isSignedIn() && (
+        isAdmin() ||
+        (getUserData().role == "capitao" && getUserData().teamId == teamId)
+      );
+    }
+
+    // Coleção pública de usuários (nome, foto, equipe, cargo)
+    // Qualquer um (inclusive público) pode ler informações básicas do atleta para tabela/resultados
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Coleção PRIVADA de dados do atleta (matrícula, telefone/WhatsApp, comprovante de matrícula)
+    // Somente o próprio atleta, o capitão de sua equipe, os diretores de modalidade ou a diretoria geral podem acessar!
+    match /athletes_private/{athleteId} {
+      allow read: if isOwner(athleteId) ||
+                     isAdmin() ||
+                     (isSignedIn() && isTeamCaptain(resource.data.teamId)) ||
+                     (isSignedIn() && getUserData().role == "diretor");
+      allow create, update: if isOwner(athleteId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Equipes: público pode ler; capitão e diretoria geral podem criar/atualizar
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (request.resource.data.captainId == request.auth.uid || isAdmin());
+      allow update: if isTeamCaptain(teamId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Modalidades: público pode ler; diretoria geral pode criar/atualizar
+    match /modalities/{modalityId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Jogos e Resultados: público pode ler; diretores daquela modalidade ou admin podem editar/inserir súmulas
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create, update: if isModalityDirector(request.resource.data.modalityId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Classificação final e pontuações por modalidade
+    match /placements/{placementId} {
+      allow read: if true;
+      allow write: if isModalityDirector(request.resource.data.modalityId) || isAdmin();
+    }
+
+    // Ocorrências disciplinares (súmula, cartões, penalidades)
+    match /incidents/{incidentId} {
+      allow read: if true;
+      allow write: if isSignedIn() && (getUserData().role == "diretor" || isAdmin());
+    }
+
+    // Comunicados oficiais da Diretoria Geral
+    match /notices/{noticeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Registros de pagamentos centralizados
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        isTeamCaptain(resource.data.teamId) ||
+        resource.data.athleteId == request.auth.uid
+      );
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
