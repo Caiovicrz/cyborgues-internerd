@@ -24,9 +24,9 @@ export interface ModalityRuleConfig {
 export const OFFICIAL_REGISTRATION_WINDOW = {
   start: new Date('2026-09-07T00:00:00-03:00'),
   end: new Date('2026-09-28T23:59:59-03:00'), // Inscrições até 28/09/2026
-  drawDate: new Date('2026-10-05T19:00:00-03:00'), // Sorteio 05/10/2026 no Instagram
+  drawDate: new Date('2026-11-05T19:00:00-03:00'), // Sorteio 05/11/2026 no Instagram
   eventStart: new Date('2026-10-31T00:00:00-03:00'), // Início 31/10/2026
-  eventEnd: new Date('2026-11-06T23:59:59-03:00'), // Encerramento sexta-feira 06/11/2026
+  eventEnd: new Date('2026-11-06T23:59:59-03:00'), // Encerramento 06/11/2026
   scheduleChangeDeadline: new Date('2026-11-02T23:59:59-03:00'),
   instagramUrl: 'https://www.instagram.com/atleticacyborgues',
 };

@@ -91,3 +91,17 @@ test('has all 14 official modalities configured', () => {
   assert.equal(collective.length, 6);
   assert.equal(individual.length, 8);
 });
+
+test('configures Caiocruz and Luisarthur as the two general directors with @Cyborgues2026', async () => {
+  const { PRESET_USERS } = await import('../data/mockTournamentData');
+  const caio = PRESET_USERS.find((u) => u.username === 'Caiocruz');
+  const luis = PRESET_USERS.find((u) => u.username === 'Luisarthur');
+
+  assert.ok(caio, 'Caiocruz must exist');
+  assert.equal(caio?.password, '@Cyborgues2026');
+  assert.equal(caio?.role, 'admin');
+
+  assert.ok(luis, 'Luisarthur must exist');
+  assert.equal(luis?.password, '@Cyborgues2026');
+  assert.equal(luis?.role, 'admin');
+});

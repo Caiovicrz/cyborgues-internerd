@@ -30,8 +30,10 @@ interface TournamentContextType {
   currentUser: UserProfile | null;
   setCurrentUser: (user: UserProfile | null) => void;
   loginAs: (role: UserRole | string) => void;
+  loginWithCredentials: (usernameOrEmail: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   loginWithEmail: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<void>;
+  changePassword: (newPassword: string) => { success: boolean; error?: string };
   logout: () => void;
   users: UserProfile[];
   
@@ -49,6 +51,14 @@ interface TournamentContextType {
 
   // Capitão
   createTeam: (name: string, tag: string, modalities: string[]) => { success: boolean; error?: string; teamId?: string };
+  captainRegisterAthlete: (teamId: string, athleteData: {
+    name: string;
+    matricula: string;
+    phone: string;
+    turma: string;
+    modalities: string[];
+    proofFileName?: string;
+  }) => { success: boolean; error?: string };
   approveTeamMember: (teamId: string, athleteId: string) => void;
   removeTeamMember: (teamId: string, athleteId: string) => void;
 
@@ -60,6 +70,19 @@ interface TournamentContextType {
   saveIncident: (incident: Omit<DisciplinaryIncident, 'id'>) => void;
 
   // Diretoria Geral
+  adminCreateUser: (userData: {
+    name: string;
+    username: string;
+    password?: string;
+    email: string;
+    role: UserRole;
+    assignedModalities?: string[];
+    teamId?: string;
+    teamName?: string;
+    phone?: string;
+    matricula?: string;
+  }) => { success: boolean; error?: string };
+  adminResetUserPassword: (uid: string, newPassword: string) => { success: boolean; error?: string };
   updateTeamStatus: (teamId: string, status: 'aprovada' | 'recusada' | 'pendente') => void;
   updateTeamPayment: (teamId: string, status: 'pago' | 'pendente' | 'parcial') => void;
   updateAthletePayment: (athleteId: string, status: 'pago' | 'pendente') => void;
@@ -68,6 +91,15 @@ interface TournamentContextType {
   drawCollectiveMatches: (modalityId: string) => void;
   saveNotice: (notice: Omit<OfficialNotice, 'id' | 'date'> & { id?: string }) => void;
   deleteNotice: (noticeId: string) => void;
+  importAllData: (payload: {
+    teams?: Team[];
+    modalities?: ModalityItem[];
+    matches?: Match[];
+    placements?: FinalPlacement[];
+    notices?: OfficialNotice[];
+    users?: UserProfile[];
+  }) => { success: boolean; message: string };
+  clearDemoData: () => void;
   resetToDefaultData: () => void;
 }
 
@@ -168,18 +200,194 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setCurrentUser(null);
       return;
     }
-    const found = users.find((u) => u.role === roleOrUid || u.uid === roleOrUid);
+    const found = users.find((u) => u.role === roleOrUid || u.uid === roleOrUid || u.username?.toLowerCase() === roleOrUid.toLowerCase());
     if (found) {
       setCurrentUser(found);
     } else {
-      const preset = PRESET_USERS.find((u) => u.role === roleOrUid);
+      const preset = PRESET_USERS.find((u) => u.role === roleOrUid || u.username?.toLowerCase() === roleOrUid.toLowerCase());
       if (preset) setCurrentUser(preset);
     }
   };
 
+  const loginWithCredentials = async (usernameOrEmail: string, password?: string): Promise<{ success: boolean; error?: string }> => {
+    const query = usernameOrEmail.trim().toLowerCase();
+    const found = users.find(
+      (u) =>
+        (u.username && u.username.toLowerCase() === query) ||
+        (u.email && u.email.toLowerCase() === query)
+    );
+
+    if (!found) {
+      return { success: false, error: 'Usuário ou e-mail não encontrado no sistema.' };
+    }
+
+    const expectedPassword = found.password || '@Cyborgues2026';
+    if (password && password !== expectedPassword) {
+      return { success: false, error: 'Senha incorreta. Verifique seus dados.' };
+    }
+
+    setCurrentUser(found);
+    return { success: true };
+  };
+
+  const changePassword = (newPassword: string): { success: boolean; error?: string } => {
+    if (!currentUser) return { success: false, error: 'Nenhum usuário conectado.' };
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'A senha deve ter no mínimo 6 dígitos.' };
+    }
+
+    // Regra: O nome de usuário (username) é estritamente imutável
+    const updatedUser: UserProfile = {
+      ...currentUser,
+      password: newPassword,
+    };
+
+    setCurrentUser(updatedUser);
+    setUsers((prev) => prev.map((u) => (u.uid === updatedUser.uid ? updatedUser : u)));
+    return { success: true };
+  };
+
+  const adminCreateUser = (userData: {
+    name: string;
+    username: string;
+    password?: string;
+    email: string;
+    role: UserRole;
+    assignedModalities?: string[];
+    teamId?: string;
+    teamName?: string;
+    phone?: string;
+    matricula?: string;
+  }): { success: boolean; error?: string } => {
+    const cleanUsername = userData.username.trim().replace(/\s+/g, '');
+    if (!cleanUsername) {
+      return { success: false, error: 'Nome de usuário obrigatório.' };
+    }
+
+    const exists = users.find((u) => u.username?.toLowerCase() === cleanUsername.toLowerCase());
+    if (exists) {
+      return { success: false, error: `O usuário "${cleanUsername}" já existe.` };
+    }
+
+    const newUser: UserProfile = {
+      uid: 'user-' + Date.now(),
+      username: cleanUsername,
+      password: userData.password || '@Cyborgues2026',
+      name: userData.name,
+      email: userData.email || `${cleanUsername.toLowerCase()}@cyborgues.uema.br`,
+      role: userData.role,
+      phone: userData.phone || '',
+      matricula: userData.matricula || '',
+      turma: userData.role === 'diretor' ? 'Coordenação de Modalidade' : 'Representante de Equipe',
+      assignedModalities: userData.assignedModalities || [],
+      teamId: userData.teamId,
+      teamName: userData.teamName,
+      registrationStatus: 'aprovada',
+      paymentStatus: 'pago',
+      createdAt: new Date().toISOString(),
+    };
+
+    setUsers((prev) => [...prev, newUser]);
+    return { success: true };
+  };
+
+  const adminResetUserPassword = (uid: string, newPassword: string): { success: boolean; error?: string } => {
+    setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, password: newPassword } : u)));
+    if (currentUser?.uid === uid) {
+      setCurrentUser((prev) => (prev ? { ...prev, password: newPassword } : null));
+    }
+    return { success: true };
+  };
+
+  const captainRegisterAthlete = (
+    teamId: string,
+    athleteData: {
+      name: string;
+      matricula: string;
+      phone: string;
+      turma: string;
+      modalities: string[];
+      proofFileName?: string;
+    }
+  ): { success: boolean; error?: string } => {
+    const matriculaClean = athleteData.matricula.trim();
+    // Validação de duplicidade no torneio
+    const existingInUsers = users.find((u) => u.matricula === matriculaClean);
+    const existingInTeams = teams.some((t) => t.members.some((m) => m.matricula === matriculaClean));
+
+    if (existingInUsers || existingInTeams) {
+      return {
+        success: false,
+        error: `A matrícula ${matriculaClean} já está cadastrada no campeonato. Cada estudante só pode pertencer a uma equipe (Art. 13 e 24).`,
+      };
+    }
+
+    const targetTeam = teams.find((t) => t.id === teamId);
+    if (!targetTeam) return { success: false, error: 'Equipe não encontrada.' };
+
+    const fee = calculateAthleteFee(athleteData.modalities.length);
+    const newMemberId = 'ath-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+
+    const newMember = {
+      athleteId: newMemberId,
+      athleteName: athleteData.name.trim(),
+      matricula: matriculaClean,
+      phone: athleteData.phone.trim(),
+      turma: athleteData.turma.trim(),
+      modalities: athleteData.modalities,
+      fee,
+      paymentStatus: 'pendente' as const,
+      registrationStatus: 'aprovada' as const,
+      isCaptain: false,
+    };
+
+    setTeams((prev) =>
+      prev.map((t) => {
+        if (t.id === teamId) {
+          const updatedMembers = [...t.members, newMember];
+          const totalFee = updatedMembers.reduce((sum, m) => sum + m.fee, 0);
+          const totalPaid = updatedMembers
+            .filter((m) => m.paymentStatus === 'pago')
+            .reduce((sum, m) => sum + m.fee, 0);
+
+          return {
+            ...t,
+            members: updatedMembers,
+            totalFee,
+            totalPaid,
+            paymentStatus: totalPaid >= totalFee && totalFee > 0 ? 'pago' : totalPaid > 0 ? 'parcial' : 'pendente',
+          };
+        }
+        return t;
+      })
+    );
+
+    const athleteUser: UserProfile = {
+      uid: newMemberId,
+      username: matriculaClean,
+      name: athleteData.name.trim(),
+      email: `${matriculaClean}@aluno.uema.br`,
+      role: 'atleta',
+      matricula: matriculaClean,
+      phone: athleteData.phone.trim(),
+      turma: athleteData.turma.trim(),
+      proofFileName: athleteData.proofFileName || 'comprovante_matricula_uema.pdf',
+      proofDocumentUrl: athleteData.proofFileName || 'comprovante_matricula_uema.pdf',
+      teamId: targetTeam.id,
+      teamName: targetTeam.name,
+      registeredModalities: athleteData.modalities,
+      feeTotal: fee,
+      paymentStatus: 'pendente',
+      registrationStatus: 'aprovada',
+      createdAt: new Date().toISOString(),
+    };
+
+    setUsers((prev) => [...prev, athleteUser]);
+    return { success: true };
+  };
+
   const loginWithGoogle = async () => {
-    // Simula login OAuth com Google usando email configurável
-    const adminEmail = 'ka.iovictor337@gmail.com';
+    const adminEmail = 'caiocruz@cyborgues.uema.br';
     const emailPrompt = prompt('Digite o e-mail Google para autenticação:', adminEmail);
     if (!emailPrompt) return;
 
@@ -189,9 +397,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return;
     }
 
-    const isAdmin = emailPrompt.toLowerCase() === adminEmail.toLowerCase();
+    const isAdmin = emailPrompt.toLowerCase().includes('caiocruz') || emailPrompt.toLowerCase().includes('luisarthur');
     const newUser: UserProfile = {
       uid: 'user-google-' + Date.now(),
+      username: emailPrompt.split('@')[0],
+      password: '@Cyborgues2026',
       name: emailPrompt.split('@')[0].toUpperCase(),
       email: emailPrompt,
       role: isAdmin ? 'admin' : 'atleta',
@@ -204,27 +414,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCurrentUser(newUser);
   };
 
-  const loginWithEmail = async (email: string, _password?: string) => {
-    const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (found) {
-      setCurrentUser(found);
-      return { success: true };
-    }
-
-    // Criar nova conta se for primeiro acesso
-    const isAdmin = email.toLowerCase() === 'ka.iovictor337@gmail.com';
-    const newUser: UserProfile = {
-      uid: 'user-email-' + Date.now(),
-      name: email.split('@')[0],
-      email: email,
-      role: isAdmin ? 'admin' : 'atleta',
-      registrationStatus: 'pendente',
-      paymentStatus: 'pendente',
-      createdAt: new Date().toISOString(),
-    };
-    setUsers((prev) => [...prev, newUser]);
-    setCurrentUser(newUser);
-    return { success: true };
+  const loginWithEmail = async (email: string, password?: string) => {
+    return loginWithCredentials(email, password);
   };
 
   const logout = () => {
@@ -737,7 +928,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             scoreB: null,
             status: 'agendado',
             toleranceMinutes: mod.toleranceMinutes,
-            notes: `Confronto sorteado oficialmente em 05/10/2026 pelo Instagram @atleticacyborgues.`,
+            notes: `Confronto sorteado oficialmente em 05/11/2026 pelo Instagram @atleticacyborgues.`,
           });
         }
       }
@@ -752,7 +943,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const notice: OfficialNotice = {
       ...noticeData,
       id,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('pt-BR'),
     };
     setNotices((prev) => {
       const idx = prev.findIndex((n) => n.id === id);
@@ -767,6 +958,50 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const deleteNotice = (noticeId: string) => {
     setNotices((prev) => prev.filter((n) => n.id !== noticeId));
+  };
+
+  const importAllData = (payload: {
+    teams?: Team[];
+    modalities?: ModalityItem[];
+    matches?: Match[];
+    placements?: FinalPlacement[];
+    notices?: OfficialNotice[];
+    users?: UserProfile[];
+  }): { success: boolean; message: string } => {
+    try {
+      if (payload.teams && Array.isArray(payload.teams)) {
+        setTeams(payload.teams);
+      }
+      if (payload.modalities && Array.isArray(payload.modalities)) {
+        setModalities(payload.modalities);
+      }
+      if (payload.matches && Array.isArray(payload.matches)) {
+        setMatches(payload.matches);
+      }
+      if (payload.placements && Array.isArray(payload.placements)) {
+        setPlacements(payload.placements);
+      }
+      if (payload.notices && Array.isArray(payload.notices)) {
+        setNotices(payload.notices);
+      }
+      if (payload.users && Array.isArray(payload.users)) {
+        setUsers(payload.users);
+      }
+      return { success: true, message: 'Dados reais importados com sucesso!' };
+    } catch (err: any) {
+      return { success: false, message: 'Erro ao processar arquivo JSON: ' + (err?.message || err) };
+    }
+  };
+
+  const clearDemoData = () => {
+    setTeams([]);
+    setMatches([]);
+    setPlacements([]);
+    setIncidents([]);
+    // Mantém o usuário admin atual
+    const adminUser = users.find((u) => u.role === 'admin') || PRESET_USERS[0];
+    setUsers([adminUser]);
+    setCurrentUser(adminUser);
   };
 
   const resetToDefaultData = () => {
@@ -787,8 +1022,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         currentUser,
         setCurrentUser,
         loginAs,
+        loginWithCredentials,
         loginWithEmail,
         loginWithGoogle,
+        changePassword,
         logout,
         users,
         teams,
@@ -801,6 +1038,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         registerAthlete,
         updateAthleteProfile,
         createTeam,
+        captainRegisterAthlete,
         approveTeamMember,
         removeTeamMember,
         saveMatch,
@@ -808,6 +1046,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         savePlacement,
         removePlacement,
         saveIncident,
+        adminCreateUser,
+        adminResetUserPassword,
         updateTeamStatus,
         updateTeamPayment,
         updateAthletePayment,
@@ -816,6 +1056,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         drawCollectiveMatches,
         saveNotice,
         deleteNotice,
+        importAllData,
+        clearDemoData,
         resetToDefaultData,
       }}
     >

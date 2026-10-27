@@ -82,7 +82,7 @@ export const PublicHome: React.FC<PublicHomeProps> = ({ setActiveTab }) => {
               className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-300 px-3.5 py-2 rounded-xl border border-amber-500/40 transition"
             >
               <Instagram className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Sorteio: 05/10/2026 no Instagram @atleticacyborgues</span>
+              <span>Sorteio: 05/11/2026 no Instagram @atleticacyborgues</span>
             </a>
           </div>
 

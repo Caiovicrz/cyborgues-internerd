@@ -14,9 +14,11 @@ import {
   X,
   Clock,
   Calendar,
+  KeyRound,
 } from 'lucide-react';
 import { Match, MatchPhase, FinalPlacement, DisciplinaryIncident } from '../types/tournament';
 import { downloadCSV, printMatchSumula } from '../utils/exportHelpers';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 export const DirectorModule: React.FC = () => {
   const {
@@ -45,6 +47,7 @@ export const DirectorModule: React.FC = () => {
 
   const [selectedModId, setSelectedModId] = useState<string>(myModalities[0]?.id || modalities[0]?.id || 'futsal');
   const [activeTab, setActiveTab] = useState<'jogos' | 'classificacao' | 'disciplina' | 'inscritos'>('jogos');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // Match Modal Form State
   const [editingMatch, setEditingMatch] = useState<Partial<Match> | null>(null);
@@ -230,27 +233,38 @@ export const DirectorModule: React.FC = () => {
           </p>
         </div>
 
-        {/* Modality Selector */}
-        <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 space-y-1.5 w-full md:w-auto">
-          <label className="text-[11px] font-cyber text-neutral-400 block uppercase font-bold">
-            Modalidade em Gestão:
-          </label>
-          <select
-            value={selectedModId}
-            onChange={(e) => setSelectedModId(e.target.value)}
-            className="w-full bg-neutral-900 border border-neutral-700 rounded-xl py-2 px-3 text-xs text-amber-300 font-bold focus:border-amber-400 focus:outline-none"
+        {/* Modality Selector & Password */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <button
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 text-xs font-cyber font-semibold transition cursor-pointer shrink-0"
+            title="Alterar Minha Senha"
           >
-            {myModalities.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name} ({m.category.toUpperCase()})
-              </option>
-            ))}
-          </select>
-          {currentModality && (
-            <div className="text-[10px] text-neutral-500 font-mono">
-              Tolerância de W.O.: <strong>{currentModality.toleranceMinutes} minutos</strong> (Art. 30 e 61)
-            </div>
-          )}
+            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+            <span>Alterar Senha</span>
+          </button>
+
+          <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 space-y-1.5 w-full sm:w-auto">
+            <label className="text-[11px] font-cyber text-neutral-400 block uppercase font-bold">
+              Modalidade em Gestão:
+            </label>
+            <select
+              value={selectedModId}
+              onChange={(e) => setSelectedModId(e.target.value)}
+              className="w-full bg-neutral-900 border border-neutral-700 rounded-xl py-2 px-3 text-xs text-amber-300 font-bold focus:border-amber-400 focus:outline-none"
+            >
+              {myModalities.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name} ({m.category.toUpperCase()})
+                </option>
+              ))}
+            </select>
+            {currentModality && (
+              <div className="text-[10px] text-neutral-500 font-mono">
+                Tolerância de W.O.: <strong>{currentModality.toleranceMinutes} minutos</strong> (Art. 30 e 61)
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -840,6 +854,11 @@ export const DirectorModule: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Modal Alterar Senha */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
     </div>
   );
 

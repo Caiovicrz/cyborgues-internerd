@@ -14,8 +14,12 @@ import {
   Check,
   Award,
   Lock,
+  KeyRound,
+  X,
+  Upload,
 } from 'lucide-react';
-import { validateTeamRequirements, isAthleteTransferAllowed, PIX_PAYMENT_INFO } from '../utils/rules';
+import { validateTeamRequirements, isAthleteTransferAllowed, PIX_PAYMENT_INFO, calculateAthleteFee } from '../utils/rules';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 export const CaptainModule: React.FC = () => {
   const {
@@ -23,6 +27,7 @@ export const CaptainModule: React.FC = () => {
     teams,
     modalities,
     createTeam,
+    captainRegisterAthlete,
     approveTeamMember,
     removeTeamMember,
     updateAthletePayment,
@@ -38,6 +43,21 @@ export const CaptainModule: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Modais
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isAddAthleteModalOpen, setIsAddAthleteModalOpen] = useState(false);
+  const [athleteSuccessMsg, setAthleteSuccessMsg] = useState<string | null>(null);
+
+  // Formulário de Inscrição de Atleta pelo Capitão
+  const [newAthleteForm, setNewAthleteForm] = useState({
+    name: '',
+    matricula: '',
+    phone: '',
+    turma: 'Eng. Comp 2024.1',
+    proofFileName: 'comprovante_matricula_uema.pdf',
+    selectedModalities: ['futsal'] as string[],
+  });
 
   // Encontrar a equipe deste capitão
   const myTeam = teams.find((t) => t.captainId === currentUser?.uid || t.id === currentUser?.teamId);
@@ -62,6 +82,51 @@ export const CaptainModule: React.FC = () => {
     const res = createTeam(createTeamForm.name, createTeamForm.tag, createTeamForm.chosenModalities);
     if (!res.success) {
       setErrorMsg(res.error || 'Erro ao registrar equipe.');
+    }
+  };
+
+  const handleRegisterAthleteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setAthleteSuccessMsg(null);
+
+    if (!myTeam) return;
+
+    if (!newAthleteForm.name.trim() || !newAthleteForm.matricula.trim()) {
+      setErrorMsg('Informe o nome completo e a matrícula do atleta.');
+      return;
+    }
+
+    if (newAthleteForm.selectedModalities.length === 0) {
+      setErrorMsg('Selecione pelo menos uma modalidade para o atleta competir.');
+      return;
+    }
+
+    const res = captainRegisterAthlete(myTeam.id, {
+      name: newAthleteForm.name,
+      matricula: newAthleteForm.matricula,
+      phone: newAthleteForm.phone,
+      turma: newAthleteForm.turma,
+      modalities: newAthleteForm.selectedModalities,
+      proofFileName: newAthleteForm.proofFileName,
+    });
+
+    if (res.success) {
+      setAthleteSuccessMsg(`Atleta ${newAthleteForm.name} cadastrado com sucesso no elenco!`);
+      setNewAthleteForm({
+        name: '',
+        matricula: '',
+        phone: '',
+        turma: 'Eng. Comp 2024.1',
+        proofFileName: 'comprovante_matricula_uema.pdf',
+        selectedModalities: ['futsal'],
+      });
+      setTimeout(() => {
+        setIsAddAthleteModalOpen(false);
+        setAthleteSuccessMsg(null);
+      }, 1400);
+    } else {
+      setErrorMsg(res.error || 'Erro ao inscrever atleta.');
     }
   };
 
@@ -96,29 +161,40 @@ export const CaptainModule: React.FC = () => {
           </h1>
           <p className="text-xs sm:text-sm text-neutral-300 max-w-xl">
             {myTeam
-              ? `Gerencie os atletas da sua equipe, confirme convocações por modalidade e controle a arrecadação das taxas de inscrição.`
+              ? `Gerencie e inscreva os atletas da sua equipe, confirme convocações por modalidade e controle a arrecadação das taxas de inscrição.`
               : `Cada pessoa só pode ser capitão e representante de UMA única equipe durante o V INTERNERD (Art. 17 §2º).`}
           </p>
         </div>
 
-        {myTeam && (
-          <div className="flex flex-col items-end gap-2 bg-neutral-950 p-4 rounded-2xl border border-neutral-800 text-xs">
-            <div className="text-neutral-400 font-cyber">Código de Convite:</div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-base font-black text-amber-400 bg-neutral-900 px-3 py-1 rounded-lg border border-neutral-700">
-                {myTeam.inviteCode}
-              </span>
-              <button
-                onClick={copyInvite}
-                className="bg-neutral-800 hover:bg-neutral-700 text-white p-2 rounded-lg transition cursor-pointer"
-                title="Copiar Código"
-              >
-                {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Botão de Alterar Senha (usuário imutável) */}
+          <button
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 text-xs font-cyber font-semibold transition cursor-pointer"
+            title="Alterar Minha Senha"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+            <span>Alterar Senha</span>
+          </button>
+
+          {myTeam && (
+            <div className="flex flex-col items-end gap-2 bg-neutral-950 p-4 rounded-2xl border border-neutral-800 text-xs">
+              <div className="text-neutral-400 font-cyber">Código da Equipe:</div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-base font-black text-amber-400 bg-neutral-900 px-3 py-1 rounded-lg border border-neutral-700">
+                  {myTeam.inviteCode}
+                </span>
+                <button
+                  onClick={copyInvite}
+                  className="bg-neutral-800 hover:bg-neutral-700 text-white p-2 rounded-lg transition cursor-pointer"
+                  title="Copiar Código"
+                >
+                  {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
-            <span className="text-[10px] text-neutral-500">Compartilhe com seus atletas</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {errorMsg && (
@@ -336,7 +412,7 @@ export const CaptainModule: React.FC = () => {
           {/* Tab 1: Elenco */}
           {activeTab === 'elenco' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <input
                   type="text"
                   value={searchTerm}
@@ -344,9 +420,18 @@ export const CaptainModule: React.FC = () => {
                   placeholder="Filtrar atletas por nome, matrícula..."
                   className="bg-neutral-900 border border-neutral-700 rounded-xl py-2 px-3 text-xs text-white placeholder-neutral-500 w-full max-w-sm focus:border-amber-400 focus:outline-none"
                 />
-                <span className="text-xs text-neutral-400 font-cyber">
-                  Total de Atletas: {myTeam.members.length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-neutral-400 font-cyber">
+                    Total: <strong>{myTeam.members.length}</strong> atletas
+                  </span>
+                  <button
+                    onClick={() => setIsAddAthleteModalOpen(true)}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer font-cyber shadow-md"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Inscrever Novo Atleta</span>
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto bg-neutral-900/70 border border-neutral-800 rounded-2xl">
@@ -560,6 +645,164 @@ export const CaptainModule: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* MODAL: Inscrever Novo Atleta pelo Capitão */}
+      {isAddAthleteModalOpen && myTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-lg rounded-3xl bg-neutral-900 border border-amber-500/40 p-6 sm:p-7 shadow-2xl glow-gold text-neutral-100 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setIsAddAthleteModalOpen(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800 transition"
+              aria-label="Fechar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-4 border-b border-neutral-800 pb-3">
+              <div className="p-2 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-500/30">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold font-heading text-white">INSCREVER ATLETA NO ELENCO</h3>
+                <p className="text-xs text-neutral-400">Equipe: <strong className="text-amber-300">{myTeam.name}</strong></p>
+              </div>
+            </div>
+
+            {athleteSuccessMsg && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-emerald-200 text-xs flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{athleteSuccessMsg}</span>
+              </div>
+            )}
+
+            {errorMsg && (
+              <div className="mb-4 p-3 rounded-xl bg-red-950/70 border border-red-500/50 text-red-200 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleRegisterAthleteSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">Nome Completo do Atleta *</label>
+                <input
+                  type="text"
+                  required
+                  value={newAthleteForm.name}
+                  onChange={(e) => setNewAthleteForm({ ...newAthleteForm, name: e.target.value })}
+                  placeholder="Nome do atleta"
+                  className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-sm text-white focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1">Matrícula UEMA *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAthleteForm.matricula}
+                    onChange={(e) => setNewAthleteForm({ ...newAthleteForm, matricula: e.target.value })}
+                    placeholder="Ex: 20241502088"
+                    className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-xs text-white focus:outline-none font-mono"
+                  />
+                  <span className="text-[10px] text-neutral-500">Validação contra duplicidade</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1">Telefone / WhatsApp *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAthleteForm.phone}
+                    onChange={(e) => setNewAthleteForm({ ...newAthleteForm, phone: e.target.value })}
+                    placeholder="(98) 9XXXX-XXXX"
+                    className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-xs text-white focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1">Turma / Período *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newAthleteForm.turma}
+                    onChange={(e) => setNewAthleteForm({ ...newAthleteForm, turma: e.target.value })}
+                    placeholder="Ex: Eng. Comp 2024.1"
+                    className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-xs text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 mb-1">Comprovante de Matrícula</label>
+                  <input
+                    type="text"
+                    value={newAthleteForm.proofFileName}
+                    onChange={(e) => setNewAthleteForm({ ...newAthleteForm, proofFileName: e.target.value })}
+                    className="w-full bg-neutral-950 border border-neutral-700 rounded-xl py-2 px-3 text-xs text-neutral-300 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Modalidades Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-amber-400 uppercase font-cyber">
+                    Modalidades que Competirá *
+                  </label>
+                  <span className="text-xs font-mono font-bold text-amber-400 bg-neutral-950 px-2 py-0.5 rounded border border-neutral-800">
+                    Taxa: R$ {calculateAthleteFee(newAthleteForm.selectedModalities.length).toFixed(2)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto p-2 bg-neutral-950 rounded-xl border border-neutral-800">
+                  {modalities.map((mod) => {
+                    const isChecked = newAthleteForm.selectedModalities.includes(mod.id);
+                    return (
+                      <label
+                        key={mod.id}
+                        className={`p-2 rounded-lg border text-xs flex items-center justify-between cursor-pointer transition ${
+                          isChecked
+                            ? 'bg-amber-400/15 border-amber-400/50 text-white'
+                            : 'bg-neutral-900 border-neutral-800 text-neutral-400'
+                        }`}
+                      >
+                        <span className="truncate mr-1 text-[11px]">{mod.name}</span>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            const updated = isChecked
+                              ? newAthleteForm.selectedModalities.filter((id) => id !== mod.id)
+                              : [...newAthleteForm.selectedModalities, mod.id];
+                            setNewAthleteForm({ ...newAthleteForm, selectedModalities: updated });
+                          }}
+                          className="rounded border-neutral-700 text-amber-400 shrink-0"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer text-sm shadow-md mt-2 font-cyber uppercase tracking-wider"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Confirmar Inscrição no Elenco</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Alteração de Senha do Capitão (usuário imutável) */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
     </div>
   );
 };

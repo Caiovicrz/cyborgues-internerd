@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
-import { ShieldCheck, Mail, KeyRound, LogIn, UserPlus, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { ShieldCheck, Mail, KeyRound, LogIn, CheckCircle2, AlertCircle, X, User, Crown, Users } from 'lucide-react';
 import { CyborgLogo } from './CyborgLogo';
 
 interface AuthModalProps {
@@ -9,9 +9,8 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { loginWithGoogle, loginWithEmail, loginAs } = useTournament();
-  const [tab, setTab] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
+  const { loginWithCredentials, loginWithGoogle, loginAs } = useTournament();
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,13 +20,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email) {
-      setError('Por favor, informe seu e-mail.');
+    if (!usernameOrEmail) {
+      setError('Por favor, informe seu usuário ou e-mail institucional.');
       return;
     }
     setLoading(true);
     try {
-      const res = await loginWithEmail(email, password);
+      const res = await loginWithCredentials(usernameOrEmail, password);
+      if (res.success) {
+        onClose();
+      } else {
+        setError(res.error || 'Falha ao autenticar.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickCredential = async (user: string, pass: string) => {
+    setUsernameOrEmail(user);
+    setPassword(pass);
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await loginWithCredentials(user, pass);
       if (res.success) {
         onClose();
       } else {
@@ -51,14 +67,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleQuickRole = (role: string) => {
-    loginAs(role);
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md rounded-2xl bg-neutral-900 border border-amber-500/30 p-6 shadow-2xl glow-gold text-neutral-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-lg rounded-3xl bg-neutral-900 border border-amber-500/40 p-6 sm:p-7 shadow-2xl glow-gold text-neutral-100 max-h-[95vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-neutral-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800 transition"
@@ -67,12 +78,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-3">
+        <div className="text-center mb-5">
+          <div className="flex justify-center mb-2">
             <CyborgLogo size="md" />
           </div>
           <h2 className="text-xl font-bold font-heading text-amber-400 tracking-wider">
-            PORTAL CYBORGUES
+            PORTAL DE ACESSO CYBORGUES
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
             Autenticação Oficial • V INTERNERD 2026 (UEMA)
@@ -80,72 +91,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-950/70 border border-red-500/50 text-red-200 text-xs flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-xl bg-red-950/70 border border-red-500/50 text-red-200 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Google Login Button */}
-        <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-neutral-800 hover:bg-neutral-700 text-white font-medium py-2.5 px-4 rounded-xl border border-neutral-700 hover:border-amber-400/50 transition mb-4 cursor-pointer text-sm"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
-          </svg>
-          <span>Continuar com Google</span>
-        </button>
-
-        <div className="relative flex py-2 items-center mb-4">
-          <div className="flex-grow border-t border-neutral-800"></div>
-          <span className="flex-shrink mx-3 text-neutral-500 text-xs uppercase tracking-wider font-cyber">
-            ou com e-mail institucional
-          </span>
-          <div className="flex-grow border-t border-neutral-800"></div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-medium text-neutral-300 mb-1">E-mail</label>
+            <label className="block text-xs font-semibold text-neutral-300 mb-1">
+              Usuário ou E-mail Institucional *
+            </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
+              <User className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.nome@aluno.uema.br"
-                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition"
+                type="text"
+                required
+                value={usernameOrEmail}
+                onChange={(e) => setUsernameOrEmail(e.target.value)}
+                placeholder="Ex: Caiocruz, Luisarthur, lucassilva..."
+                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition font-mono"
               />
             </div>
+            <span className="text-[10px] text-neutral-500 font-cyber">
+              Capitães e Diretores recebem seus logins da Diretoria Geral.
+            </span>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-neutral-300 mb-1">Senha</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-neutral-300">Senha de Acesso *</label>
+              <span className="text-[10px] text-amber-400/80 font-mono">Padrão: @Cyborgues2026</span>
+            </div>
             <div className="relative">
               <KeyRound className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
               <input
                 type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition"
+                placeholder="••••••••••••"
+                className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-sm text-white placeholder-neutral-500 focus:outline-none transition font-mono"
               />
             </div>
           </div>
@@ -153,62 +139,74 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer text-sm shadow-md mt-2"
+            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer text-sm shadow-md mt-2 font-cyber uppercase tracking-wider"
           >
             <LogIn className="w-4 h-4" />
-            <span>{tab === 'login' ? 'Entrar no Sistema' : 'Cadastrar Conta'}</span>
+            <span>{loading ? 'Autenticando...' : 'Entrar no Sistema'}</span>
           </button>
         </form>
 
-        {/* Quick Role Tester Bar */}
-        <div className="mt-6 pt-5 border-t border-neutral-800">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-400 text-center mb-2.5 font-cyber">
-            🚀 Testar Perfis Instantaneamente:
-          </p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+        {/* Quick Credential Buttons Requested by User */}
+        <div className="mt-5 pt-4 border-t border-neutral-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 font-cyber">
+              🔑 Entrar com Credenciais Oficiais:
+            </span>
+            <span className="text-[10px] text-neutral-400 font-mono">Senha: @Cyborgues2026</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            {/* Caio Cruz */}
             <button
-              onClick={() => handleQuickRole('admin')}
-              className="p-2 rounded-lg bg-neutral-800/80 hover:bg-amber-500/20 hover:border-amber-500/50 border border-neutral-700 text-left transition flex items-center gap-1.5 text-neutral-200"
+              onClick={() => handleQuickCredential('Caiocruz', '@Cyborgues2026')}
+              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-amber-500/15 border border-amber-500/30 hover:border-amber-400 text-left transition flex items-center gap-2 cursor-pointer group"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <Crown className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate">
-                <span className="font-bold text-amber-300">Diretoria Geral</span>
-                <span className="block text-[10px] text-neutral-400">Admin Geral</span>
+                <span className="font-bold text-amber-300 block">Caio Cruz</span>
+                <span className="text-[10px] text-neutral-400 font-mono">Usuário: Caiocruz</span>
               </div>
             </button>
 
+            {/* Luis Arthur */}
             <button
-              onClick={() => handleQuickRole('capitao')}
-              className="p-2 rounded-lg bg-neutral-800/80 hover:bg-amber-500/20 hover:border-amber-500/50 border border-neutral-700 text-left transition flex items-center gap-1.5 text-neutral-200"
+              onClick={() => handleQuickCredential('Luisarthur', '@Cyborgues2026')}
+              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-amber-500/15 border border-amber-500/30 hover:border-amber-400 text-left transition flex items-center gap-2 cursor-pointer group"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <Crown className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate">
-                <span className="font-bold text-amber-300">Capitão Equipe</span>
-                <span className="block text-[10px] text-neutral-400">ByteForce</span>
+                <span className="font-bold text-amber-300 block">Luys Arthur</span>
+                <span className="text-[10px] text-neutral-400 font-mono">Usuário: Luisarthur</span>
               </div>
             </button>
 
+            {/* Capitão Lucas Silva */}
             <button
-              onClick={() => handleQuickRole('diretor')}
-              className="p-2 rounded-lg bg-neutral-800/80 hover:bg-amber-500/20 hover:border-amber-500/50 border border-neutral-700 text-left transition flex items-center gap-1.5 text-neutral-200"
+              onClick={() => handleQuickCredential('lucassilva', '@Cyborgues2026')}
+              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-blue-500/15 border border-blue-500/30 hover:border-blue-400 text-left transition flex items-center gap-2 cursor-pointer group"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <Users className="w-4 h-4 text-blue-400 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate">
-                <span className="font-bold text-amber-300">Diretor Modalidade</span>
-                <span className="block text-[10px] text-neutral-400">Futsal / Vôlei</span>
+                <span className="font-bold text-blue-300 block">Lucas Silva</span>
+                <span className="text-[10px] text-neutral-400 font-mono">Capitão ByteForce</span>
               </div>
             </button>
 
+            {/* Diretor Lucas Vinicius */}
             <button
-              onClick={() => handleQuickRole('atleta')}
-              className="p-2 rounded-lg bg-neutral-800/80 hover:bg-amber-500/20 hover:border-amber-500/50 border border-neutral-700 text-left transition flex items-center gap-1.5 text-neutral-200"
+              onClick={() => handleQuickCredential('lucasvinicius', '@Cyborgues2026')}
+              className="p-2.5 rounded-xl bg-neutral-950 hover:bg-emerald-500/15 border border-emerald-500/30 hover:border-emerald-400 text-left transition flex items-center gap-2 cursor-pointer group"
             >
-              <UserPlus className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
               <div className="truncate">
-                <span className="font-bold text-amber-300">Atleta / Aluno</span>
-                <span className="block text-[10px] text-neutral-400">Inscrito</span>
+                <span className="font-bold text-emerald-300 block">Lucas Vinícius</span>
+                <span className="text-[10px] text-neutral-400 font-mono">Dir. Futsal & Vôlei</span>
               </div>
             </button>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800 text-[11px] text-neutral-400 leading-relaxed font-cyber">
+            ℹ️ <strong className="text-amber-300">Regra de Segurança:</strong> Diretores e Capitães podem alterar suas senhas a qualquer momento no menu "Minha Conta", mas o nome de usuário (login) é estritamente imutável.
           </div>
         </div>
       </div>

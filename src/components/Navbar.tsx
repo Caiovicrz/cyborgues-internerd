@@ -16,9 +16,11 @@ import {
   Flame,
   UserCheck,
   Instagram,
+  KeyRound,
 } from 'lucide-react';
 import { CyborgLogo } from './CyborgLogo';
 import { AuthModal } from './AuthModal';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 interface NavbarProps {
   activeTab: string;
@@ -29,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const { currentUser, logout, loginAs } = useTournament();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   const getRoleBadge = (role?: string) => {
@@ -82,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
             className="flex items-center gap-1 hover:underline text-black font-extrabold"
           >
             <Instagram className="w-3.5 h-3.5" />
-            <span>Sorteio 05/10/2026 no Instagram @atleticacyborgues</span>
+            <span>Sorteio 05/11/2026 no Instagram @atleticacyborgues</span>
           </a>
           <span>•</span>
           <span>PIX: aaa.cyborgues@gmail.com</span>
@@ -253,9 +256,16 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
                     else setActiveTab('modulo-atleta');
                   }}
                   className="text-xs text-neutral-200 hover:text-amber-400 font-medium max-w-[130px] truncate cursor-pointer"
-                  title={currentUser.name}
+                  title={`${currentUser.name} (@${currentUser.username || currentUser.email})`}
                 >
                   {currentUser.name}
+                </button>
+                <button
+                  onClick={() => setPasswordModalOpen(true)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-amber-400 hover:bg-neutral-900 transition cursor-pointer"
+                  title="Alterar Senha"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={logout}
@@ -396,6 +406,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
       {/* Auth Modal */}
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal isOpen={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} />
     </header>
   );
 };

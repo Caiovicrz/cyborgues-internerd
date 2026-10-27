@@ -2,94 +2,54 @@ import React, { useState } from 'react';
 import { useTournament } from '../context/TournamentContext';
 import {
   User,
+  Search,
   ShieldCheck,
   CheckCircle,
   AlertCircle,
-  Upload,
   Calendar,
   DollarSign,
-  FileText,
-  Copy,
   Users,
-  Award,
+  Copy,
   Check,
+  Award,
+  Lock,
 } from 'lucide-react';
 import { calculateAthleteFee, PIX_PAYMENT_INFO } from '../utils/rules';
 
 export const AthleteModule: React.FC = () => {
-  const { currentUser, teams, modalities, matches, registerAthlete } = useTournament();
+  const { currentUser, teams, modalities, matches } = useTournament();
 
-  const [formData, setFormData] = useState({
-    name: currentUser?.name || '',
-    matricula: currentUser?.matricula || '',
-    email: currentUser?.email || '',
-    phone: currentUser?.phone || '',
-    turma: currentUser?.turma || 'Eng. Comp 2024.1',
-    photoUrl: currentUser?.photoUrl || '',
-    proofFileName: currentUser?.proofFileName || 'comprovante_matricula_uema.pdf',
-    teamId: currentUser?.teamId || (teams[0]?.id || ''),
-    inviteCode: '',
-    selectedModalities: currentUser?.registeredModalities || ['futsal', 'fifa'],
-  });
-
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState(currentUser?.matricula || '');
   const [copiedPix, setCopiedPix] = useState(false);
 
-  const calculatedFee = calculateAthleteFee(formData.selectedModalities.length);
+  // Coleta todos os atletas de todas as equipes
+  const allEnrolledAthletes = teams.flatMap((team) =>
+    team.members.map((member) => ({
+      ...member,
+      teamId: team.id,
+      teamName: team.name,
+      teamTag: team.tag,
+      captainName: team.captainName,
+      captainContact: team.captainContact,
+      teamStatus: team.status,
+    }))
+  );
 
-  const handleModalityToggle = (modId: string) => {
-    setFormData((prev) => {
-      const exists = prev.selectedModalities.includes(modId);
-      const updated = exists
-        ? prev.selectedModalities.filter((id) => id !== modId)
-        : [...prev.selectedModalities, modId];
-      return { ...prev, selectedModalities: updated };
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFeedback(null);
-
-    const res = registerAthlete(
-      {
-        uid: currentUser?.uid,
-        name: formData.name,
-        matricula: formData.matricula,
-        email: formData.email,
-        phone: formData.phone,
-        turma: formData.turma,
-        photoUrl: formData.photoUrl,
-        proofFileName: formData.proofFileName,
-        proofDocumentUrl: formData.proofFileName,
-        registeredModalities: formData.selectedModalities,
-      },
-      formData.inviteCode.trim() || formData.teamId
+  const filteredAthletes = allEnrolledAthletes.filter((ath) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      ath.athleteName.toLowerCase().includes(q) ||
+      ath.matricula.toLowerCase().includes(q) ||
+      ath.teamName.toLowerCase().includes(q)
     );
-
-    if (res.success) {
-      setFeedback({
-        type: 'success',
-        message: 'Inscrição registrada e enviada com sucesso! Aguarde a aprovação do capitão e da diretoria.',
-      });
-    } else {
-      setFeedback({
-        type: 'error',
-        message: res.error || 'Erro ao processar inscrição.',
-      });
-    }
-  };
+  });
 
   const copyPix = () => {
     navigator.clipboard.writeText(PIX_PAYMENT_INFO.key);
     setCopiedPix(true);
     setTimeout(() => setCopiedPix(false), 2000);
   };
-
-  // Jogos das modalidades em que o atleta está inscrito
-  const myMatches = matches.filter(
-    (m) => currentUser?.registeredModalities?.includes(m.modalityId)
-  );
 
   return (
     <div className="space-y-8 pb-16">
@@ -98,358 +58,227 @@ export const AthleteModule: React.FC = () => {
         <div className="space-y-2 text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 text-amber-300 text-xs font-cyber font-bold">
             <User className="w-3.5 h-3.5" />
-            <span>Módulo A • Registro & Ficha do Atleta</span>
+            <span>Módulo A • Consulta & Ficha do Atleta</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black font-heading text-white">
-            CADASTRO OFICIAL DO ATLETA
+            CONSULTA DE INSCRIÇÃO DO ATLETA
           </h1>
           <p className="text-xs sm:text-sm text-neutral-300 max-w-xl">
-            Inscreva-se em sua equipe e selecione as modalidades que deseja disputar.
-            Conforme o Art. 13, cada atleta só pode pertencer a UMA equipe em todo o campeonato.
+            Consulte sua inscrição oficial, equipe vinculada e modalidades cadastradas no V INTERNERD 2026.
           </p>
         </div>
 
         {currentUser && (
           <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 text-right text-xs space-y-1">
-            <div className="text-neutral-400">Status da Inscrição:</div>
-            <div className="inline-block font-bold uppercase font-cyber px-2.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-500/30">
-              {currentUser.registrationStatus || 'Pendente'}
-            </div>
-            <div className="text-neutral-400 pt-1">Status do Pagamento:</div>
-            <div
-              className={`inline-block font-bold uppercase font-cyber px-2.5 py-0.5 rounded ${
-                currentUser.paymentStatus === 'pago'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
-              }`}
-            >
-              {currentUser.paymentStatus === 'pago' ? 'Pago' : 'Pendente'}
+            <div className="text-neutral-400 font-cyber">Conectado como:</div>
+            <div className="font-bold text-amber-300 font-mono text-sm">{currentUser.name}</div>
+            <div className="text-[11px] text-neutral-400">
+              Usuário: <span className="font-mono text-neutral-300">{currentUser.username || currentUser.email}</span>
             </div>
           </div>
         )}
       </div>
 
-      {feedback && (
-        <div
-          className={`p-4 rounded-2xl border text-sm flex items-center gap-3 ${
-            feedback.type === 'success'
-              ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-200'
-              : 'bg-red-950/60 border-red-500/50 text-red-200'
-          }`}
-        >
-          {feedback.type === 'success' ? (
-            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-          )}
-          <span>{feedback.message}</span>
+      {/* Official Rule Notice: Athletes Do NOT Self-Register */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/40 border border-amber-500/50 flex flex-col sm:flex-row items-start gap-3.5 text-amber-200">
+        <Lock className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-1 text-xs">
+          <h3 className="font-bold font-cyber text-amber-300 uppercase tracking-wide text-sm">
+            REGRA OFICIAL: INSCRIÇÕES CENTRALIZADAS PELOS CAPITÃES (Art. 17 e 23)
+          </h3>
+          <p className="leading-relaxed text-neutral-300">
+            Conforme determinado pelo Regulamento Oficial do V INTERNERD, <strong className="text-white">os atletas não realizam auto-inscrição individual no sistema</strong>. Todas as inscrições de atletas são realizadas exclusivamente pelo <strong className="text-amber-300">Capitão da sua Equipe</strong>. Se você é atleta e ainda não consta na lista, solicite sua inclusão ao capitão da sua equipe.
+          </p>
         </div>
-      )}
+      </div>
 
-      {/* Main Form and Side Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Registration Form */}
-        <div className="lg:col-span-2 bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 sm:p-8 space-y-6">
-          <h2 className="text-lg font-bold font-heading text-white flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-amber-400" />
-            <span>DADOS DO ATLETA (Art. 18 e 24)</span>
-          </h2>
+      {/* Search Bar */}
+      <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-bold font-heading text-white flex items-center gap-2">
+              <Search className="w-5 h-5 text-amber-400" />
+              <span>LOCALIZAR MINHA INSCRIÇÃO</span>
+            </h2>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              Digite seu nome, número de matrícula da UEMA ou o nome da sua equipe.
+            </p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  Nome Completo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome do atleta"
-                  className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-sm text-white focus:outline-none"
-                />
-              </div>
+          <div className="relative w-full sm:max-w-md">
+            <Search className="w-4 h-4 text-neutral-500 absolute left-3 top-3" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar por matrícula (ex: 20241502045) ou nome..."
+              className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 pl-9 pr-3 text-xs text-white placeholder-neutral-500 focus:outline-none font-mono"
+            />
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  Matrícula Acadêmica (UEMA) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.matricula}
-                  onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
-                  placeholder="Ex: 20241502045"
-                  className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-sm text-white focus:outline-none font-mono"
-                />
-                <span className="text-[10px] text-neutral-500 font-cyber">
-                  A matrícula é validada para evitar inscrições duplicadas em mais de uma equipe.
-                </span>
-              </div>
+        {/* Results Count */}
+        <div className="text-xs text-neutral-500 font-cyber flex justify-between items-center border-t border-neutral-800 pt-3">
+          <span>{filteredAthletes.length} atleta(s) cadastrado(s) no campeonato</span>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-amber-400 hover:underline cursor-pointer text-[11px]"
+            >
+              Limpar busca
+            </button>
+          )}
+        </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  E-mail *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="aluno@uema.br"
-                  className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-sm text-white focus:outline-none"
-                />
-              </div>
+        {/* Athletes List */}
+        {filteredAthletes.length === 0 ? (
+          <div className="p-8 text-center bg-neutral-950/60 rounded-2xl border border-neutral-800 space-y-2">
+            <AlertCircle className="w-8 h-8 text-neutral-600 mx-auto" />
+            <p className="text-sm font-semibold text-neutral-300">Nenhum atleta encontrado com os dados informados.</p>
+            <p className="text-xs text-neutral-500 max-w-md mx-auto">
+              Verifique a matrícula digitada ou solicite ao capitão da sua equipe que realize o seu cadastro no Painel do Capitão.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {filteredAthletes.map((ath) => {
+              const athleteFee = calculateAthleteFee(ath.modalities.length);
+              const athleteMatches = matches.filter((m) => ath.modalities.includes(m.modalityId));
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  Telefone / WhatsApp *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(98) 9XXXX-XXXX"
-                  className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-sm text-white focus:outline-none font-mono"
-                />
-              </div>
+              return (
+                <div
+                  key={`${ath.teamId}-${ath.athleteId}`}
+                  className="p-5 rounded-2xl bg-neutral-950 border border-neutral-800 hover:border-amber-500/40 transition space-y-3.5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-white text-base font-heading">
+                          {ath.athleteName}
+                        </h3>
+                        {ath.isCaptain && (
+                          <span className="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded font-cyber font-bold border border-amber-500/30">
+                            Capitão
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-neutral-400 font-mono mt-0.5">
+                        Matrícula: <strong className="text-neutral-200">{ath.matricula}</strong> • {ath.turma}
+                      </div>
+                    </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  Período / Turma *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.turma}
-                  onChange={(e) => setFormData({ ...formData, turma: e.target.value })}
-                  placeholder="Ex: Eng. Comp 2024.1"
-                  className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-sm text-white focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">
-                  Comprovante de Matrícula (Art. 24)
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={formData.proofFileName}
-                      onChange={(e) => setFormData({ ...formData, proofFileName: e.target.value })}
-                      placeholder="Nome do arquivo enviado"
-                      className="w-full bg-neutral-950 border border-neutral-700 rounded-xl py-2 px-3 text-xs text-neutral-300 focus:outline-none"
-                    />
-                  </div>
-                  <label className="bg-neutral-800 hover:bg-neutral-700 text-amber-300 px-3 py-2 rounded-xl text-xs font-cyber flex items-center gap-1 cursor-pointer transition border border-neutral-700">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Anexar</span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setFormData({ ...formData, proofFileName: e.target.files[0].name });
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Team Selection and Invite Code */}
-            <div className="pt-4 border-t border-neutral-800 space-y-3">
-              <label className="block text-xs font-bold text-amber-400 uppercase font-cyber">
-                Vínculo com a Equipe (Art. 13 - Regra de Representação Única)
-              </label>
-              <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-xs text-neutral-400 space-y-1">
-                <p className="text-neutral-300 font-semibold">
-                  Atenção: É expressamente proibido representar mais de uma equipe durante o V INTERNERD.
-                </p>
-                <p>
-                  Sua pontuação em modalidades individuais também reverterá exclusivamente para esta equipe.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-neutral-300 mb-1">
-                    Selecionar Equipe Existente:
-                  </label>
-                  <select
-                    value={formData.teamId}
-                    onChange={(e) => setFormData({ ...formData, teamId: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-700 rounded-xl py-2 px-3 text-xs text-white focus:border-amber-400 focus:outline-none"
-                  >
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} (Capitão: {t.captainName})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs text-neutral-300 mb-1">
-                    Ou digitar Código de Convite da Equipe:
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.inviteCode}
-                    onChange={(e) => setFormData({ ...formData, inviteCode: e.target.value })}
-                    placeholder="Ex: BYTE2026"
-                    className="w-full bg-neutral-950 border border-neutral-700 focus:border-amber-400 rounded-xl py-2 px-3 text-xs text-white uppercase font-mono"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Modalities Selection with Real-Time Fee Calculation */}
-            <div className="pt-4 border-t border-neutral-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="block text-xs font-bold text-amber-400 uppercase font-cyber">
-                    Modalidades que Deseja Disputar
-                  </label>
-                  <p className="text-[11px] text-neutral-400">
-                    Taxa: R$ 5,00 por modalidade (Art. 22). Marque as modalidades que irá participar.
-                  </p>
-                </div>
-                <div className="bg-amber-400/10 border border-amber-500/30 px-3 py-1.5 rounded-xl text-right">
-                  <div className="text-[10px] text-neutral-400 font-cyber uppercase">Taxa Calculada</div>
-                  <div className="text-base font-black font-mono text-amber-400">
-                    R$ {calculatedFee.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
-                {modalities.map((m) => {
-                  const isChecked = formData.selectedModalities.includes(m.id);
-                  return (
-                    <label
-                      key={m.id}
-                      className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${
-                        isChecked
-                          ? 'bg-amber-400/15 border-amber-400/50 text-white'
-                          : 'bg-neutral-950/60 border-neutral-800 text-neutral-400 hover:border-neutral-700'
+                    <span
+                      className={`text-[10px] font-bold uppercase font-cyber px-2.5 py-1 rounded border shrink-0 ${
+                        ath.paymentStatus === 'pago'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          : 'bg-red-500/20 text-red-300 border-red-500/40'
                       }`}
                     >
-                      <div className="truncate mr-2">
-                        <div className="text-xs font-bold truncate">{m.name}</div>
-                        <div className="text-[10px] text-neutral-500 uppercase">{m.category}</div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => handleModalityToggle(m.id)}
-                        className="rounded border-neutral-700 text-amber-400 focus:ring-0 shrink-0"
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
+                      {ath.paymentStatus === 'pago' ? 'Taxa Paga' : 'Pagamento Pendente'}
+                    </span>
+                  </div>
 
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer font-cyber uppercase tracking-wider text-sm shadow-lg mt-6"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Salvar Inscrição Oficial</span>
-            </button>
-          </form>
+                  {/* Team Info */}
+                  <div className="p-3 bg-neutral-900/80 rounded-xl border border-neutral-800/80 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-neutral-400">Equipe Vinculada:</span>
+                      <span className="font-bold text-amber-400">{ath.teamName} ({ath.teamTag})</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-neutral-400">Representante / Capitão:</span>
+                      <span className="text-neutral-300">{ath.captainName}</span>
+                    </div>
+                  </div>
+
+                  {/* Modalities */}
+                  <div>
+                    <div className="text-[11px] font-bold text-neutral-400 uppercase font-cyber mb-1.5 flex items-center justify-between">
+                      <span>Modalidades Inscritas ({ath.modalities.length}):</span>
+                      <span className="text-amber-400 font-mono font-bold">R$ {athleteFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ath.modalities.map((modId) => {
+                        const modItem = modalities.find((m) => m.id === modId);
+                        return (
+                          <span
+                            key={modId}
+                            className="bg-neutral-900 px-2.5 py-1 rounded-lg text-[11px] text-neutral-300 border border-neutral-800 flex items-center gap-1 font-cyber"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            <span>{modItem ? modItem.name : modId}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Next Matches preview */}
+                  {athleteMatches.length > 0 && (
+                    <div className="border-t border-neutral-800 pt-2 text-[11px] text-neutral-400 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{athleteMatches.length} partida(s) programada(s)</span>
+                      </span>
+                      <span className="text-amber-400/80 font-cyber">Ver na Tabela de Jogos &rarr;</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Payment & Centralization Guide */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 space-y-3">
+          <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-amber-400" />
+            <span>PAGAMENTO DA TAXA (Art. 22 e 23)</span>
+          </h3>
+          <p className="text-xs text-neutral-300 leading-relaxed">
+            A taxa de inscrição é de <strong className="text-amber-300">R$ 5,00 por modalidade</strong>.
+            Lembre-se: os atletas repassam o valor da sua taxa diretamente ao <strong className="text-white">Capitão da sua equipe</strong>. O capitão reúne os valores de todos os atletas e efetua a transferência do total para a organização.
+          </p>
+
+          <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 space-y-1 text-xs">
+            <div className="text-neutral-400 font-cyber">Chave PIX Oficial da Atlética:</div>
+            <div className="flex items-center justify-between bg-neutral-900 p-2 rounded-lg border border-neutral-700">
+              <span className="font-mono text-amber-400 font-bold truncate mr-2">{PIX_PAYMENT_INFO.key}</span>
+              <button
+                type="button"
+                onClick={copyPix}
+                className="p-1 text-neutral-300 hover:text-white shrink-0 cursor-pointer"
+                title="Copiar PIX"
+              >
+                {copiedPix ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="text-[10px] text-neutral-500 pt-1">
+              {PIX_PAYMENT_INFO.bank} • Titular: <strong>{PIX_PAYMENT_INFO.holder}</strong> (Diretoria Geral)
+            </div>
+          </div>
         </div>
 
-        {/* Right: Payment Instructions & Athlete Status */}
-        <div className="space-y-6">
-          {/* Payment Card */}
-          <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 space-y-4">
-            <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-amber-400" />
-              <span>CONTROLE FINANCEIRO (Art. 22)</span>
-            </h3>
-
-            <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-neutral-400">Modalidades Selecionadas:</span>
-                <span className="font-bold text-white font-mono">{formData.selectedModalities.length}</span>
-              </div>
-              <div className="flex items-center justify-between border-t border-neutral-800 pt-2">
-                <span className="text-xs text-neutral-400">Total Devido pelo Atleta:</span>
-                <span className="text-lg font-black text-amber-400 font-mono">
-                  R$ {calculatedFee.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-t border-neutral-800 pt-2">
-                <span className="text-xs text-neutral-400">Situação:</span>
-                <span
-                  className={`text-xs font-bold font-cyber uppercase px-2 py-0.5 rounded ${
-                    currentUser?.paymentStatus === 'pago'
-                      ? 'bg-emerald-500/20 text-emerald-300'
-                      : 'bg-red-500/20 text-red-300'
-                  }`}
-                >
-                  {currentUser?.paymentStatus === 'pago' ? 'Confirmado' : 'Pendente de Repasse'}
-                </span>
-              </div>
-            </div>
-
-            <div className="text-xs text-neutral-300 space-y-2 bg-neutral-950/60 p-4 rounded-2xl border border-neutral-800">
-              <p className="font-bold text-amber-300 font-cyber">Centralização do Pagamento (Art. 23):</p>
-              <p className="text-[11px] text-neutral-400 leading-relaxed">
-                Repasse sua taxa diretamente ao capitão da sua equipe. O capitão reunirá o montante da equipe e efetuará a transferência para o PIX oficial:
-              </p>
-              <div className="p-2.5 bg-neutral-900 rounded-xl border border-neutral-700 flex items-center justify-between text-xs">
-                <span className="font-mono text-amber-400 truncate mr-2">{PIX_PAYMENT_INFO.key}</span>
-                <button
-                  type="button"
-                  onClick={copyPix}
-                  className="p-1 text-neutral-400 hover:text-white shrink-0 cursor-pointer"
-                  title="Copiar PIX"
-                >
-                  {copiedPix ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-              <div className="text-[10px] text-neutral-500">
-                {PIX_PAYMENT_INFO.bank} • Titular: {PIX_PAYMENT_INFO.holder}
-              </div>
-            </div>
-          </div>
-
-          {/* My Next Matches */}
-          <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 space-y-4">
-            <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-amber-400" />
-              <span>MINHAS PARTIDAS AGENDADAS</span>
-            </h3>
-
-            {myMatches.length === 0 ? (
-              <p className="text-xs text-neutral-500 font-cyber">
-                Nenhuma partida agendada para suas modalidades no momento.
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {myMatches.slice(0, 3).map((m) => (
-                  <div
-                    key={m.id}
-                    className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 text-xs space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-amber-400">{m.modalityName}</span>
-                      <span className="text-[10px] text-neutral-500">{m.date} - {m.time}</span>
-                    </div>
-                    <div className="text-white truncate font-medium">{m.teamAName} vs {m.teamBName}</div>
-                    <div className="text-[10px] text-neutral-400">{m.venue}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-6 space-y-3">
+          <h3 className="text-base font-bold font-heading text-white flex items-center gap-2">
+            <Users className="w-5 h-5 text-amber-400" />
+            <span>REQUISITOS DO ATLETA (Art. 11 e 24)</span>
+          </h3>
+          <ul className="text-xs text-neutral-300 space-y-2 leading-relaxed">
+            <li className="flex items-start gap-2">
+              <span className="text-amber-400 font-bold">&bull;</span>
+              <span>Estar regularmente matriculado em Engenharia de Computação na UEMA no semestre do campeonato.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-amber-400 font-bold">&bull;</span>
+              <span>Apresentar documento oficial com foto e comprovante de matrícula quando solicitado pela arbitragem.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-amber-400 font-bold">&bull;</span>
+              <span>Representação única: é expressamente vedado disputar modalidades por mais de uma equipe (Art. 13).</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

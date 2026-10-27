@@ -6,6 +6,8 @@ export type UserRole = 'visitante' | 'atleta' | 'capitao' | 'diretor' | 'admin';
 
 export interface UserProfile {
   uid: string;
+  username: string; // Login único e imutável
+  password?: string; // Senha criptografada/armazenada
   name: string;
   email: string;
   role: UserRole;

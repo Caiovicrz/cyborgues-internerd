@@ -50,7 +50,7 @@ export const PublicRegulations: React.FC = () => {
         {
           num: 'Art. 9º §5º',
           title: 'Sorteio Oficial das Coletivas pelo Instagram',
-          content: 'Os confrontos das modalidades coletivas serão definidos por sorteio oficial no dia 05/10/2026 transmitido ao vivo pelo Instagram da Atlética: https://www.instagram.com/atleticacyborgues.',
+          content: 'Os confrontos das modalidades coletivas serão definidos por sorteio oficial no dia 05/11/2026 transmitido ao vivo pelo Instagram da Atlética: https://www.instagram.com/atleticacyborgues.',
         },
         {
           num: 'Art. 10º',
