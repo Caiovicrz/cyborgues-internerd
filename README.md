@@ -10,7 +10,7 @@
 
 ## 🚀 Como Publicar no GitHub Pages (Git Sites)
 
-O repositório já está 100% configurado com `base: './'` e fluxo automatizado no GitHub Actions (`.github/workflows/deploy.yml`).
+O repositório já está 100% configurado com `base: '/cyborgues-internerd/'` no `vite.config.ts` e com o workflow oficial do GitHub Actions (`.github/workflows/deploy-pages.yml`).
 
 ### 1. Inicializar e Comitar no Git Local
 Execute no terminal da pasta do projeto:
@@ -18,23 +18,22 @@ Execute no terminal da pasta do projeto:
 ```bash
 git init
 git add .
-git commit -m "feat: V INTERNERD 2026 Cyborgues - base oficial limpa e pronta para produção"
+git commit -m "feat: V INTERNERD 2026 Cyborgues - base oficial e deploy GitHub Pages"
 git branch -M main
 ```
 
-### 2. Conectar ao seu Repositório no GitHub
-Crie um repositório no seu GitHub (ex: `v-internerd`) e rode:
-
+### 2. Conectar ao Repositório no GitHub
 ```bash
-git remote add origin https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
+git remote add origin https://github.com/caiovicrz/cyborgues-internerd.git
 git push -u origin main
 ```
 
-### 3. Ativar o GitHub Pages
-1. No seu repositório no GitHub, acesse: **Settings** > **Pages**
-2. Em **Build and deployment** > **Source**, selecione: **GitHub Actions**
-3. Pronto! O GitHub irá rodar a action e seu site estará no ar em:  
-   `https://SEU_USUARIO.github.io/SEU_REPOSITORIO/`
+### 3. Ativar o GitHub Pages no Repositório
+1. No seu repositório no GitHub (`caiovicrz/cyborgues-internerd`), acesse: **Settings** > **Pages**
+2. Na seção **Build and deployment** > **Source**, selecione: **GitHub Actions**
+3. O GitHub Actions executará o workflow `.github/workflows/deploy-pages.yml` automaticamente a cada `push` na branch `main`.
+4. O site estará no ar em:  
+   👉 **https://caiovicrz.github.io/cyborgues-internerd/**
 
 ---
 
