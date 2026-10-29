@@ -219,13 +219,13 @@ export const DirectorModule: React.FC = () => {
   return (
     <div className="space-y-8 pb-16">
       {/* Module Banner */}
-      <div className="rounded-3xl bg-neutral-900 border border-emerald-500/30 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 glow-gold-sm">
-        <div className="space-y-2 text-center md:text-left">
+      <div className="rounded-3xl bg-neutral-900 border border-emerald-500/30 p-4 sm:p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 glow-gold-sm">
+        <div className="space-y-2 text-center md:text-left w-full md:w-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-cyber font-bold">
             <Flame className="w-3.5 h-3.5" />
             <span>Módulo C • Área do Diretor de Modalidade</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-heading text-white">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black font-heading text-white">
             GESTÃO TÉCNICA DE MODALIDADE
           </h1>
           <p className="text-xs sm:text-sm text-neutral-300 max-w-xl">
@@ -234,17 +234,17 @@ export const DirectorModule: React.FC = () => {
         </div>
 
         {/* Modality Selector & Password */}
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 text-xs font-cyber font-semibold transition cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white border border-neutral-700 text-xs font-cyber font-semibold transition cursor-pointer shrink-0"
             title="Alterar Minha Senha"
           >
             <KeyRound className="w-3.5 h-3.5 text-amber-400" />
             <span>Alterar Senha</span>
           </button>
 
-          <div className="bg-neutral-950 p-4 rounded-2xl border border-neutral-800 space-y-1.5 w-full sm:w-auto">
+          <div className="bg-neutral-950 p-3 sm:p-4 rounded-2xl border border-neutral-800 space-y-1.5 w-full sm:w-auto">
             <label className="text-[11px] font-cyber text-neutral-400 block uppercase font-bold">
               Modalidade em Gestão:
             </label>
@@ -269,12 +269,12 @@ export const DirectorModule: React.FC = () => {
       </div>
 
       {currentModality && (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full max-w-full">
           {/* Tabs */}
-          <div className="flex border-b border-neutral-800 gap-2 font-cyber text-xs">
+          <div className="flex border-b border-neutral-800 gap-2 font-cyber text-xs overflow-x-auto no-scrollbar pb-1 w-full max-w-full">
             <button
               onClick={() => setActiveTab('jogos')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'jogos'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'
@@ -284,17 +284,17 @@ export const DirectorModule: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('classificacao')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'classificacao'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'
               }`}
             >
-              Lançamento do Pódio Final
+              Lançamento do Pódio
             </button>
             <button
               onClick={() => setActiveTab('disciplina')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'disciplina'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'
@@ -304,7 +304,7 @@ export const DirectorModule: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('inscritos')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'inscritos'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'
@@ -317,7 +317,7 @@ export const DirectorModule: React.FC = () => {
           {/* Tab 1: Jogos e Súmulas */}
           {activeTab === 'jogos' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="font-bold text-white text-base font-heading">
                     PARTIDAS DE {currentModality.name.toUpperCase()}
@@ -328,7 +328,7 @@ export const DirectorModule: React.FC = () => {
                 </div>
                 <button
                   onClick={handleOpenNewMatch}
-                  className="bg-amber-400 hover:bg-amber-300 text-black font-bold px-4 py-2 rounded-xl text-xs font-cyber flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                  className="bg-amber-400 hover:bg-amber-300 text-black font-bold px-4 py-2.5 rounded-xl text-xs font-cyber flex items-center justify-center gap-1.5 transition cursor-pointer shadow-sm w-full sm:w-auto shrink-0"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Novo Confronto</span>

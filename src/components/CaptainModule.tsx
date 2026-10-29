@@ -376,10 +376,10 @@ export const CaptainModule: React.FC = () => {
           )}
 
           {/* Tabs: Elenco, Modalidades e Financeiro */}
-          <div className="flex border-b border-neutral-800 gap-2 font-cyber text-xs">
+          <div className="flex border-b border-neutral-800 gap-2 font-cyber text-xs overflow-x-auto no-scrollbar pb-1 w-full max-w-full">
             <button
               onClick={() => setActiveTab('elenco')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'elenco'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'
@@ -389,7 +389,7 @@ export const CaptainModule: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('modalidades')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'modalidades'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'
@@ -399,7 +399,7 @@ export const CaptainModule: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('financeiro')}
-              className={`px-4 py-2.5 font-bold transition border-b-2 cursor-pointer ${
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === 'financeiro'
                   ? 'border-amber-400 text-amber-400'
                   : 'border-transparent text-neutral-400 hover:text-white'

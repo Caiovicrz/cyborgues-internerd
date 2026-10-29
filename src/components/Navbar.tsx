@@ -68,24 +68,24 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   return (
     <header className="sticky top-0 z-40 w-full bg-neutral-950/95 backdrop-blur-md border-b-2 border-amber-500/30 shadow-xl">
       {/* Top Notice News Ticker (Letreiro Digital estilo Jornal) */}
-      <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[11px] font-bold py-1.5 relative overflow-hidden flex items-center border-b border-amber-600/40 select-none shadow-sm">
+      <div className="w-full max-w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[11px] font-bold py-1.5 relative overflow-hidden flex items-center border-b border-amber-600/40 select-none shadow-sm">
         {/* Fixed Badge on the left */}
-        <div className="z-10 bg-black text-amber-400 pl-3 pr-2.5 py-0.5 ml-2 rounded-md flex items-center gap-1.5 shrink-0 shadow-md border border-amber-500/50">
+        <div className="z-10 bg-black text-amber-400 pl-2.5 pr-2 py-0.5 ml-2 rounded-md flex items-center gap-1 shrink-0 shadow-md border border-amber-500/50">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-          <span className="text-[10px] uppercase font-black font-cyber tracking-wider">
+          <span className="text-[9px] sm:text-[10px] uppercase font-black font-cyber tracking-wider">
             OFICIAL
           </span>
         </div>
 
         {/* Gradient shadow mask for smooth fade in */}
-        <div className="absolute left-24 top-0 bottom-0 w-8 bg-gradient-to-r from-amber-500 to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-18 sm:left-24 top-0 bottom-0 w-6 sm:w-8 bg-gradient-to-r from-amber-500 to-transparent z-10 pointer-events-none" />
 
         {/* Infinite Scrolling Ticker (passando igual mensagens de jornal) */}
-        <div className="overflow-hidden whitespace-nowrap flex-1 ml-3">
+        <div className="overflow-hidden whitespace-nowrap flex-1 min-w-0 ml-2">
           <div className="animate-ticker font-cyber tracking-wide text-neutral-950 font-extrabold flex items-center">
             {/* Duplicated track to create 100% seamless continuous scroll */}
             {[0, 1].map((copyIndex) => (
-              <span key={copyIndex} className="inline-flex items-center gap-4 mr-4">
+              <span key={copyIndex} className="inline-flex items-center gap-3 sm:gap-4 mr-3 sm:mr-4">
                 <span>V INTERNERD CYBORGUES 2026</span>
                 <span className="text-black/50">•</span>
                 <span>UEMA CAMPUS PAULO VI – SÃO LUÍS/MA</span>
@@ -109,25 +109,26 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
       </div>
 
       {/* Main Navbar Row with Generous Spacing and Lower Border Margin */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 w-full">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           {/* Brand Logo & Title with Safe Vertical Breathing Room */}
           <div
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group shrink-0"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group min-w-0"
           >
-            <CyborgLogo size="md" className="group-hover:scale-105 transition-transform" />
+            <CyborgLogo size="sm" className="sm:hidden shrink-0" />
+            <CyborgLogo size="md" className="hidden sm:flex shrink-0 group-hover:scale-105 transition-transform" />
             <div className="flex flex-col justify-center min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 leading-none">
-                <span className="font-heading font-black tracking-wider text-lg sm:text-xl text-white">
+                <span className="font-heading font-black tracking-wider text-base sm:text-xl text-white whitespace-nowrap">
                   V INTER<span className="text-amber-400">NERD</span>
                 </span>
-                <span className="text-[10px] sm:text-[11px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded font-mono font-bold">
+                <span className="text-[9px] sm:text-[11px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded font-mono font-bold">
                   2026
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] font-semibold text-neutral-300 font-cyber tracking-tight mt-1 truncate max-w-[190px] sm:max-w-none">
-                A.A.A. ENG. DE COMPUTAÇÃO CYBORGUES – UEMA
+              <p className="text-[9px] sm:text-[11px] font-semibold text-neutral-300 font-cyber tracking-tight mt-1 truncate max-w-[150px] sm:max-w-none">
+                CYBORGUES – UEMA
               </p>
             </div>
           </div>

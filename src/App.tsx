@@ -16,12 +16,12 @@ function TournamentApp() {
   const [activeTab, setActiveTab] = useState<string>('home');
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans selection:bg-amber-400 selection:text-black">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-neutral-950 text-neutral-100 flex flex-col font-sans selection:bg-amber-400 selection:text-black">
       {/* Header and Navigation */}
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 pt-6 sm:pt-8 overflow-x-hidden">
         {activeTab === 'home' && <PublicHome setActiveTab={setActiveTab} />}
         {activeTab === 'regulamento' && <PublicRegulations />}
         {activeTab === 'jogos' && <PublicScheduleAndMatches />}

@@ -279,7 +279,7 @@ export const AdminModule: React.FC = () => {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex border-b border-neutral-800 gap-2 font-cyber text-xs overflow-x-auto pb-1">
+      <div className="flex border-b border-neutral-800 gap-2 font-cyber text-xs overflow-x-auto no-scrollbar pb-1 w-full max-w-full">
         <button
           onClick={() => setActiveTab('overview')}
           className={`px-3.5 py-2.5 font-bold transition border-b-2 cursor-pointer shrink-0 ${
