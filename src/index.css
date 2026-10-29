@@ -28,6 +28,28 @@
   border-color: rgba(234, 179, 8, 0.4);
 }
 
+/* Letreiro de jornal / News ticker marquee animation */
+@keyframes ticker-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker-scroll 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-ticker:hover,
+.animate-ticker:active {
+  animation-play-state: paused;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -38,7 +60,6 @@
 }
 ::-webkit-scrollbar-thumb {
   background: #27272a;
-  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #ca8a04;

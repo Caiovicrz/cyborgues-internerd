@@ -78,7 +78,7 @@ function TournamentApp() {
             </button>
             <span>&bull;</span>
             <a
-              href="/assets/aistudio/REGULAMENTO_OFICIAL_V_INTERNERD_2026-3_89e291d9.pdf"
+              href={`${import.meta.env.BASE_URL}assets/aistudio/REGULAMENTO_OFICIAL_V_INTERNERD_2026-3_89e291d9.pdf`}
               download
               target="_blank"
               rel="noreferrer"

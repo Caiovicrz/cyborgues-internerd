@@ -67,50 +67,66 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-neutral-950/95 backdrop-blur-md border-b-2 border-amber-500/30 shadow-xl">
-      {/* Top Notice Ticker */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 text-black text-[11px] font-bold px-4 py-1.5 flex items-center justify-between font-cyber">
-        <div className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-          <span className="bg-black text-amber-400 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
+      {/* Top Notice News Ticker (Letreiro Digital estilo Jornal) */}
+      <div className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black text-[11px] font-bold py-1.5 relative overflow-hidden flex items-center border-b border-amber-600/40 select-none shadow-sm">
+        {/* Fixed Badge on the left */}
+        <div className="z-10 bg-black text-amber-400 pl-3 pr-2.5 py-0.5 ml-2 rounded-md flex items-center gap-1.5 shrink-0 shadow-md border border-amber-500/50">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+          <span className="text-[10px] uppercase font-black font-cyber tracking-wider">
             OFICIAL
           </span>
-          <span>V INTERNERD CYBORGUES 2026 • UEMA SÃO LUÍS • 31/10/2026 A 06/11/2026</span>
         </div>
-        <div className="hidden lg:flex items-center gap-4 text-[11px]">
-          <span>Inscrições até: <strong>28/09/2026</strong></span>
-          <span>•</span>
-          <a
-            href="https://www.instagram.com/atleticacyborgues"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 hover:underline text-black font-extrabold"
-          >
-            <Instagram className="w-3.5 h-3.5" />
-            <span>Sorteio 05/11/2026 no Instagram @atleticacyborgues</span>
-          </a>
-          <span>•</span>
-          <span>PIX: aaa.cyborgues@gmail.com</span>
+
+        {/* Gradient shadow mask for smooth fade in */}
+        <div className="absolute left-24 top-0 bottom-0 w-8 bg-gradient-to-r from-amber-500 to-transparent z-10 pointer-events-none" />
+
+        {/* Infinite Scrolling Ticker (passando igual mensagens de jornal) */}
+        <div className="overflow-hidden whitespace-nowrap flex-1 ml-3">
+          <div className="animate-ticker font-cyber tracking-wide text-neutral-950 font-extrabold flex items-center">
+            {/* Duplicated track to create 100% seamless continuous scroll */}
+            {[0, 1].map((copyIndex) => (
+              <span key={copyIndex} className="inline-flex items-center gap-4 mr-4">
+                <span>V INTERNERD CYBORGUES 2026</span>
+                <span className="text-black/50">•</span>
+                <span>UEMA CAMPUS PAULO VI – SÃO LUÍS/MA</span>
+                <span className="text-black/50">•</span>
+                <span>JOGOS: 31/10/2026 A 06/11/2026</span>
+                <span className="text-black/50">•</span>
+                <span>INSCRIÇÕES ATÉ 28/09/2026</span>
+                <span className="text-black/50">•</span>
+                <span>SORTEIO DAS CHAVES: 05/11/2026 NO INSTAGRAM @ATLETICACYBORGUES</span>
+                <span className="text-black/50">•</span>
+                <span>TAXA: R$ 5,00 POR MODALIDADE</span>
+                <span className="text-black/50">•</span>
+                <span>CHAVE PIX: aaa.cyborgues@gmail.com</span>
+                <span className="text-black/50">•</span>
+                <span>14 MODALIDADES EM DISPUTA</span>
+                <span className="text-black/50">•</span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Main Navbar Row with Generous Spacing and Lower Border Margin */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-        <div className="flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between gap-3">
           {/* Brand Logo & Title with Safe Vertical Breathing Room */}
           <div
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-3.5 cursor-pointer group shrink-0"
+            className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group shrink-0"
           >
             <CyborgLogo size="md" className="group-hover:scale-105 transition-transform" />
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2 leading-none">
-                <span className="font-heading font-black tracking-wider text-xl text-white">
+            <div className="flex flex-col justify-center min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 leading-none">
+                <span className="font-heading font-black tracking-wider text-lg sm:text-xl text-white">
                   V INTER<span className="text-amber-400">NERD</span>
                 </span>
-                <span className="text-[11px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded font-mono font-bold">
+                <span className="text-[10px] sm:text-[11px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded font-mono font-bold">
                   2026
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-neutral-300 font-cyber tracking-tight mt-1.5">
+              <p className="text-[10px] sm:text-[11px] font-semibold text-neutral-300 font-cyber tracking-tight mt-1 truncate max-w-[190px] sm:max-w-none">
                 A.A.A. ENG. DE COMPUTAÇÃO CYBORGUES – UEMA
               </p>
             </div>

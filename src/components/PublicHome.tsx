@@ -13,7 +13,7 @@ import {
   Shield,
   Instagram,
 } from 'lucide-react';
-import { CyborgLogo } from './CyborgLogo';
+import { CyborgLogo, cyborgLogoImg } from './CyborgLogo';
 
 interface PublicHomeProps {
   setActiveTab: (tab: string) => void;
@@ -34,15 +34,15 @@ export const PublicHome: React.FC<PublicHomeProps> = ({ setActiveTab }) => {
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
-          {/* Main Official Emblem */}
-          <div className="flex justify-center">
-            <CyborgLogo size="xl" className="hover:scale-105 transition-transform" />
+          {/* Main Official Emblem with Gold Glow */}
+          <div className="flex justify-center pt-2">
+            <CyborgLogo size="2xl" className="hover:scale-105 transition-transform" />
           </div>
 
-          {/* Badge with the Atlética Logo (Emoji Removed as Requested) */}
+          {/* Badge with the Atlética Logo */}
           <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-semibold font-cyber uppercase tracking-wider shadow-sm">
             <img
-              src="/assets/aistudio/image_1__114eeea8.png"
+              src={cyborgLogoImg}
               alt="Atlética Cyborgues"
               className="w-5 h-5 object-contain"
             />
@@ -113,7 +113,7 @@ export const PublicHome: React.FC<PublicHomeProps> = ({ setActiveTab }) => {
             </button>
 
             <a
-              href="/assets/aistudio/REGULAMENTO_OFICIAL_V_INTERNERD_2026-3_89e291d9.pdf"
+              href={`${import.meta.env.BASE_URL}assets/aistudio/REGULAMENTO_OFICIAL_V_INTERNERD_2026-3_89e291d9.pdf`}
               download
               target="_blank"
               rel="noreferrer"
